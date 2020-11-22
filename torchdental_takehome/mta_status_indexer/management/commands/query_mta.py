@@ -21,14 +21,18 @@ class Command(BaseCommand):
                 continue
 
             res = json.loads(response.content)
-            self.process_routes(res['routeDetails'])
+            #self.process_routes(res['routeDetails'])
             time.sleep(settings.MTA_QUERY_INTERVAL)
 
     def process_routes(self, routes:list):
         for r in routes:
-            
-            if r['inService']:
-                logger.info('{} is currently out of service!'.format(r['route']))
-            else:
-                logger.info('{} is currently in service!'.format(r['route']))
+            self.print_route(r)
+            LineUpdate.objects.create(name=r['route'], in_service=r['inService'])
 
+    def print_route(self, route, in_service):
+        last_update = LineUpdate.objects.filter(name=route).order_by('timestamp').first()
+
+        if last_update and last_update.in_service and not in_service:
+            logger.info('Line {} is experiencing delays'.format(route))
+        elif last_update and not last_update.in_service and in_service:
+            logger.info('Line {} is now recovered'.format(route))

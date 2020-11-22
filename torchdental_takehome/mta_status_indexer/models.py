@@ -7,5 +7,5 @@ class LineUpdate(models.Model):
 
     in_service = models.BooleanField()
 
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
