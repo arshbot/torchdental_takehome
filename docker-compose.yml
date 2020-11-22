@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+        
+  torchdental_takehome:
+    build: .
+    command: ["python", "torchdental_takehome/manage.py", "query_mta"]
+    env_file:
+      - ./infrastructure/docker-compose/env.db.dev
+      - ./infrastructure/docker-compose/env.dev
+    volumes:
+      - torchdental_takehome:/app/
+    networks:
+      - tth
+    depends_on:
+      - db
+      - migrate
+
+  migrate:
+    build: .
+    command: ["python", "torchdental_takehome/manage.py", "migrate", "--no-input"]
+    env_file:
+      - ./infrastructure/docker-compose/env.db.dev
+      - ./infrastructure/docker-compose/env.dev
+    volumes:
+      - torchdental_takehome:/app/
+    networks:
+      - tth
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./infrastructure/docker-compose/env.db.dev
+    networks:
+      - tth
+    ports:
+      - "8001:5432"
+
+volumes:
+  postgres_data:
+  torchdental_takehome:
+
+networks:
+  tth:
