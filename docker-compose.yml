@@ -9,7 +9,8 @@ services:
       - ./infrastructure/docker-compose/env.db.dev
       - ./infrastructure/docker-compose/env.dev
     volumes:
-      - torchdental_takehome:/app/
+      # - torchdental_takehome:/app/
+      - /home/harshagoli/Projects/torchdental_takehome/torchdental_takehome
     networks:
       - tth
     depends_on:
@@ -18,12 +19,13 @@ services:
 
   migrate:
     build: .
-    command: ["python", "torchdental_takehome/manage.py", "migrate", "--no-input"]
+    command: ["python", "torchdental_takehome/manage.py", "migrate"]
     env_file:
       - ./infrastructure/docker-compose/env.db.dev
       - ./infrastructure/docker-compose/env.dev
     volumes:
-      - torchdental_takehome:/app/
+      # - torchdental_takehome:/app/
+      - /home/harshagoli/Projects/torchdental_takehome/torchdental_takehome
     networks:
       - tth
     depends_on:

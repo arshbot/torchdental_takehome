@@ -4,9 +4,12 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
 from django.db import models
-from mta_status_indexer.models import LineUpdate
+from mta_status_indexer.models import LineUpdate, Line
 
 logger = logging.getLogger(__name__)
+
+# To silence the logging messages of requests
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -21,18 +24,30 @@ class Command(BaseCommand):
                 continue
 
             res = json.loads(response.content)
-            #self.process_routes(res['routeDetails'])
+            self.process_routes(res['routeDetails'])
             time.sleep(settings.MTA_QUERY_INTERVAL)
 
     def process_routes(self, routes:list):
         for r in routes:
-            self.print_route(r)
-            LineUpdate.objects.create(name=r['route'], in_service=r['inService'])
+            route, _ = Line.objects.get_or_create(name=r['route'])
+            last_update = route.lineupdate_set.order_by('timestamp').last()
 
-    def print_route(self, route, in_service):
-        last_update = LineUpdate.objects.filter(name=route).order_by('timestamp').first()
+            if not self.is_route_status_different(route, last_update, r['inService']):
+                continue
 
-        if last_update and last_update.in_service and not in_service:
-            logger.info('Line {} is experiencing delays'.format(route))
-        elif last_update and not last_update.in_service and in_service:
-            logger.info('Line {} is now recovered'.format(route))
+            line_update = LineUpdate.objects.create(line=route, in_service=r['inService'])
+            if not line_update.in_service and last_update:
+                route.cached_uptime += (line_update.timestamp - last_update.timestamp)
+
+    def is_route_status_different(self, route, last_update, in_service) -> bool:
+
+        if not last_update:
+            pass
+        elif last_update.in_service and not in_service:
+            logger.info('Line {} is experiencing delays'.format(route.name))
+        elif not last_update.in_service and in_service:
+            logger.info('Line {} is now recovered'.format(route.name))
+        elif last_update.in_service == in_service:
+            return False
+
+        return True

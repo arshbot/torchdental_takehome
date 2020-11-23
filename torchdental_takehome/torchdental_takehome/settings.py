@@ -10,15 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
-import os
+import os, logging
 from decimal import Decimal
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+
 MTA_URL = 'https://collector-otp-prod.camsys-apps.com/realtime/serviceStatus'
 MTA_API_KEY = 'qeqy84JE7hUKfaI0Lxm2Ttcm6ZA0bYrP'
-MTA_QUERY_INTERVAL = 60 # seconds
+MTA_QUERY_INTERVAL = 15 # seconds
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -30,15 +32,6 @@ SECRET_KEY = '3r96100c0^$jn9p@t!iu7il+tx3o+p$rc!@*1&i$6by37tia-3'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-JSON_TX_FILE_PATH = [
-    os.environ.get('JSON_TX_FILE_1', None),
-    os.environ.get('JSON_TX_FILE_2', None),
-]
-
-JSON_USERS_FILE_PATH = os.environ.get('JSON_USERS_FILE', None)
-
-CONFIRMATION_TARGET = 6
 
 # Application definition
 
@@ -129,6 +122,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
+    },
+    'requests': {
+        # The requests library is too verbose in it's logging, reducing the verbosity in our logs.
+        'level': 'WARNING',
     },
 }
 
